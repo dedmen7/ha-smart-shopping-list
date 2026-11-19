@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+
+- The card follows the language each user picked in their profile, so one person can use it in English and another in Dutch. Without a choice it follows the Home Assistant system language, as before.
+
 ## 0.2.0
 
 - Bought items move to an archive a day after they were bought, automatically. The archive keeps a year.

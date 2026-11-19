@@ -128,7 +128,8 @@ class SmartShoppingListCard extends HTMLElement {
     this._render();
   }
 
-  _lang() { return String(this._hass?.config?.language || this._hass?.language || 'en').toLowerCase().startsWith('nl') ? 'nl' : 'en'; }
+  /** The language the user picked in their profile; without a choice, the Home Assistant system language. English unless it is Dutch. */
+  _lang() { return String(this._hass?.selectedLanguage || this._hass?.config?.language || this._hass?.language || 'en').toLowerCase().startsWith('nl') ? 'nl' : 'en'; }
   _locale() { return this._lang() === 'nl' ? 'nl-NL' : (this._hass?.locale?.language || 'en-GB'); }
   _t(key, values = {}) {
     const text = SHOPPING_TEXT[this._lang()][key] ?? SHOPPING_TEXT.en[key] ?? key;

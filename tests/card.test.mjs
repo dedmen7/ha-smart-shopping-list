@@ -25,6 +25,7 @@ let attributes = {
   supply: {enabled: true, can_grams: 800, grams_per_100ml: 15, warn_days: 3, product_name: 'Flesvoeding', diary_entity: 'calendar.baby_feeding_diary', opened_at: '2026-11-13T09:00:00+01:00', left_grams: 260, days_left: 2.9, low: true},
 };
 let language = 'en';
+let selectedLanguage = null;
 const archive = [
   {id: 'x1', name: 'melk', quantity: 2, category: 'dairy', added_by: 'Tom', added_at: '2026-11-18T08:00:00+01:00', done_by: 'Tom', done_at: '2026-11-18T18:05:00+01:00'},
   {id: 'x2', name: 'brood', quantity: 1, category: 'bread', added_by: 'Janou', added_at: '2026-11-17T08:00:00+01:00', done_by: 'Janou', done_at: '2026-11-17T10:00:00+01:00'},
@@ -32,7 +33,7 @@ const archive = [
 const calls = [];
 let reject = null;
 const hass = () => ({
-  config: {language, time_zone: 'Europe/Amsterdam'}, locale: {language: 'en', time_format: '24'}, language: 'en',
+  config: {language, time_zone: 'Europe/Amsterdam'}, locale: {language: 'en', time_format: '24'}, language: 'en', selectedLanguage,
   states: {'sensor.smart_shopping_list_status': {state: '2', attributes: structuredClone(attributes)}},
   callWS: async request => {
     calls.push([request.service, request.service_data]);
@@ -123,6 +124,14 @@ $('#archive-toggle').click();
 assert.equal($('#archive').hidden, true);
 assert.equal($('#archive-toggle').textContent, 'Archief bekijken');
 assert.equal($('[data-category=dairy] li .meta').textContent, 'door Janou');
+// A user who chose English in their profile gets English, also on a Dutch Home Assistant.
+selectedLanguage = 'en';
+card.hass = hass();
+assert.equal($('h2').textContent, 'Shopping');
+assert.equal($('#bought li .meta').textContent, 'Bought by Janou · today 18:32');
+selectedLanguage = null;
+card.hass = hass();
+assert.equal($('h2').textContent, 'Boodschappen');
 // An empty list says so and hides the regulars.
 attributes = {...attributes, items: [], regulars: []};
 card.hass = hass();

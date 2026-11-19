@@ -87,7 +87,7 @@ When the days left fall to the warning threshold (three by default), the product
 
 ## Translations
 
-The card, the entities and messages follow the Home Assistant system language. English is the default and Dutch is included. Add a language with a file in `translations/`, a table in `texts.py`, an entry in `SHOPPING_TEXT` in the card and, if you like, product keywords in `shopping.py`.
+The card follows the language each user picked in their profile, and the Home Assistant system language when they picked none. Entities and messages follow the system language. English is the default and Dutch is included. Add a language with a file in `translations/`, a table in `texts.py`, an entry in `SHOPPING_TEXT` in the card and, if you like, product keywords in `shopping.py`.
 
 ## Privacy
 
