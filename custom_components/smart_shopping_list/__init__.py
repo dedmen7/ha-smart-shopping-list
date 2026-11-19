@@ -16,7 +16,7 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
 from .const import CARD_FILENAME, CARD_URL_PATH, CONF_NAMES, DOMAIN
-from .manager import ShoppingManager
+from .manager import ShoppingManager, archive_entries
 from .shopping import CATEGORIES, MAXIMUM_QUANTITY
 from .supply import SupplySettings
 
@@ -86,6 +86,11 @@ def _register_services(hass: HomeAssistant) -> None:
         lambda target, call: target.async_update(item_id=call.data['item_id'], name=call.data.get('name'), quantity=call.data.get('quantity'), category=call.data.get('category')),
     )
     register('clear_done', {}, lambda target, call: target.async_clear_done())
+
+    async def get_archive(call: ServiceCall) -> ServiceResponse:
+        return {'items': archive_entries(manager().state)}
+
+    hass.services.async_register(domain=DOMAIN, service='get_archive', service_func=get_archive, schema=vol.Schema({}), supports_response=SupportsResponse.ONLY)
     register('open_new_can', {}, lambda target, call: target.async_open_new_can())
     register('refresh_supply', {}, lambda target, call: target.async_refresh_supply())
 

@@ -54,6 +54,7 @@ update_item:
             - household
             - other
 clear_done:
+get_archive:
 open_new_can:
 refresh_supply:
 set_supply:

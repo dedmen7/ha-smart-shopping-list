@@ -1,4 +1,4 @@
-"""Runs the list inside Home Assistant: names the acting user, stores every change and keeps the formula supply up to date."""
+"""Runs the list inside Home Assistant: names the acting user, stores every change, archives bought items after a day and keeps the formula supply up to date."""
 
 import asyncio
 import uuid
@@ -43,6 +43,7 @@ class ShoppingManager:
             self.state, self.supply, self.opened_at, self.listed_for = from_stored(stored)
         self._unsubscribers.append(async_track_time_interval(hass=self.hass, action=self._async_refresh_tick, interval=timedelta(minutes=SUPPLY_REFRESH_MINUTES)))
         self._watch_diary()
+        await self.async_archive_due()
         await self.async_refresh_supply()
 
     @callback
@@ -91,7 +92,12 @@ class ShoppingManager:
         await self._change(change)
 
     async def async_clear_done(self) -> None:
-        await self._change(shopping.clear_done)
+        now = dt_util.now()
+        await self._change(lambda state: shopping.clear_done(state, now=now))
+
+    async def async_archive_due(self) -> None:
+        now = dt_util.now()
+        await self._change(lambda state: shopping.archive_bought(state, now=now))
 
     async def async_set_supply(self, settings: SupplySettings) -> None:
         async with self._lock:
@@ -170,11 +176,21 @@ class ShoppingManager:
         await self.async_refresh_supply()
 
     async def _async_refresh_tick(self, _moment: datetime) -> None:
+        await self.async_archive_due()
         await self.async_refresh_supply()
 
 
 def _new_id() -> str:
     return uuid.uuid4().hex
+
+
+def archive_entries(state: ShoppingState) -> list[dict[str, Any]]:
+    """The archive for the get_archive action: newest first, times in the Home Assistant time zone."""
+    return [
+        {'id': item.item_id, 'name': item.name, 'quantity': item.quantity, 'category': item.category, 'added_by': item.added_by,
+         'added_at': dt_util.as_local(item.added_at).isoformat(), 'done_by': item.done_by, 'done_at': None if item.done_at is None else dt_util.as_local(item.done_at).isoformat()}
+        for item in state.archive
+    ]
 
 
 def supply_attributes(status: SupplyStatus | None, settings: SupplySettings) -> dict[str, Any]:

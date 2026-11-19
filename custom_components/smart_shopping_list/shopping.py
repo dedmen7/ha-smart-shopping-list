@@ -3,10 +3,12 @@
 import re
 from collections.abc import Callable
 from dataclasses import dataclass, replace
-from datetime import datetime
+from datetime import datetime, timedelta
 
 MAXIMUM_NAME_LENGTH = 100
 MAXIMUM_QUANTITY = 99
+ARCHIVE_AFTER = timedelta(days=1)
+ARCHIVE_KEEP = timedelta(days=365)
 
 # Aisles in shop order; the first matching keyword wins, so the more specific aisles come first.
 CATEGORIES = ('produce', 'bread', 'meat_fish', 'dairy', 'frozen', 'pantry', 'drinks', 'baby', 'care', 'household', 'other')
@@ -68,6 +70,7 @@ class Product:
 class ShoppingState:
     items: tuple[Item, ...] = ()
     products: dict[str, Product] | None = None
+    archive: tuple[Item, ...] = ()
 
     def __post_init__(self) -> None:
         if self.products is None:
@@ -151,8 +154,20 @@ def remove_item(state: ShoppingState, *, item_id: str) -> ShoppingState:
     return replace(state, items=tuple(item for item in state.items if item.item_id != item_id))
 
 
-def clear_done(state: ShoppingState) -> ShoppingState:
-    return replace(state, items=tuple(item for item in state.items if not item.done))
+def archive_bought(state: ShoppingState, *, now: datetime, after: timedelta = ARCHIVE_AFTER) -> ShoppingState:
+    """Moves items bought at least `after` ago to the archive, newest first, and forgets archived items older than a year."""
+    due = [item for item in state.items if item.done and item.done_at is not None and item.done_at <= now - after]
+    kept = tuple(item for item in state.archive if item.done_at is not None and item.done_at >= now - ARCHIVE_KEEP)
+    if not due and kept == state.archive:
+        return state
+    archive = tuple(sorted((*due, *kept), key=lambda item: item.done_at, reverse=True))
+    due_ids = {item.item_id for item in due}
+    return replace(state, items=tuple(item for item in state.items if item.item_id not in due_ids), archive=archive)
+
+
+def clear_done(state: ShoppingState, *, now: datetime) -> ShoppingState:
+    """Archives every bought item right away."""
+    return archive_bought(state, now=now, after=timedelta(0))
 
 
 def regulars(state: ShoppingState, *, limit: int) -> list[Product]:

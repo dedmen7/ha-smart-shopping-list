@@ -135,8 +135,13 @@
       }
     },
     "clear_done": {
-      "name": "Clear bought items",
-      "description": "Removes bought items; what was bought is remembered for the regulars.",
+      "name": "Archive bought items",
+      "description": "Moves bought items to the archive now instead of after a day; what was bought is remembered for the regulars.",
+      "fields": {}
+    },
+    "get_archive": {
+      "name": "Get archive",
+      "description": "Returns the bought items of the last year, newest first, with who bought them and when.",
       "fields": {}
     },
     "open_new_can": {

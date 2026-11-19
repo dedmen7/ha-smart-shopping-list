@@ -136,3 +136,29 @@ async def test_the_todo_descriptions_follow_the_language_and_name_older_days(has
     await call(hass, 'add_item', parents['Tom'], text='kaas')
     listed = await hass.services.async_call('todo', 'get_items', {}, target={'entity_id': TODO}, blocking=True, return_response=True)
     assert [item.get('description') for item in listed[TODO]['items']] == ['Gehaald door Janou · 19 nov 09:00', 'Toegevoegd door Tom']
+
+
+async def test_bought_items_are_archived_after_a_day_and_the_archive_can_be_read(hass: HomeAssistant, entry: MockConfigEntry, parents: dict[str, User], freezer: FrozenDateTimeFactory) -> None:
+    await call(hass, 'add_item', parents['Tom'], text='2x melk')
+    await call(hass, 'add_item', parents['Tom'], text='brood')
+    await call(hass, 'complete_item', parents['Janou'], item_id=items(hass)[0]['id'])
+    freezer.move_to(local('2026-11-20T09:31'))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+    assert [item['name'] for item in items(hass)] == ['brood']
+    archive = await call(hass, 'get_archive')
+    assert archive == {'items': [{
+        'id': archive['items'][0]['id'], 'name': 'melk', 'quantity': 2, 'category': 'dairy', 'added_by': 'Tom',
+        'added_at': local('2026-11-19T09:00').isoformat(), 'done_by': 'Janou', 'done_at': local('2026-11-19T09:00').isoformat(),
+    }]}
+    assert await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+    assert [item['name'] for item in (await call(hass, 'get_archive'))['items']] == ['melk']
+
+
+async def test_clearing_archives_the_bought_items_now(hass: HomeAssistant, entry: MockConfigEntry, parents: dict[str, User]) -> None:
+    await call(hass, 'add_item', parents['Tom'], text='melk')
+    await call(hass, 'complete_item', parents['Tom'], item_id=items(hass)[0]['id'])
+    await call(hass, 'clear_done')
+    assert items(hass) == []
+    assert [item['name'] for item in (await call(hass, 'get_archive'))['items']] == ['melk']

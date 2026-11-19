@@ -10,7 +10,8 @@ from .supply import SupplySettings
 
 def to_stored(*, state: ShoppingState, supply: SupplySettings, opened_at: datetime | None, listed_for: datetime | None) -> dict[str, Any]:
     return {
-        'items': [{**asdict(item), 'added_at': item.added_at.isoformat(), 'done_at': _iso(item.done_at)} for item in state.items],
+        'items': [_item_to_stored(item) for item in state.items],
+        'archive': [_item_to_stored(item) for item in state.archive],
         'products': {key: {**asdict(product), 'last_bought': _iso(product.last_bought)} for key, product in state.products.items()},
         'supply': asdict(supply),
         'opened_at': _iso(opened_at),
@@ -19,10 +20,19 @@ def to_stored(*, state: ShoppingState, supply: SupplySettings, opened_at: dateti
 
 
 def from_stored(data: dict[str, Any]) -> tuple[ShoppingState, SupplySettings, datetime | None, datetime | None]:
-    items = tuple(Item(**{**item, 'added_at': _moment(item['added_at']), 'done_at': _optional(item.get('done_at'))}) for item in data.get('items', []))
+    items = tuple(_item_from_stored(item) for item in data.get('items', []))
+    archive = tuple(_item_from_stored(item) for item in data.get('archive', []))
     products = {key: Product(**{**product, 'last_bought': _optional(product.get('last_bought'))}) for key, product in data.get('products', {}).items()}
     supply = SupplySettings(**data.get('supply', {}))
-    return ShoppingState(items=items, products=products), supply, _optional(data.get('opened_at')), _optional(data.get('listed_for'))
+    return ShoppingState(items=items, products=products, archive=archive), supply, _optional(data.get('opened_at')), _optional(data.get('listed_for'))
+
+
+def _item_to_stored(item: Item) -> dict[str, Any]:
+    return {**asdict(item), 'added_at': item.added_at.isoformat(), 'done_at': _iso(item.done_at)}
+
+
+def _item_from_stored(item: dict[str, Any]) -> Item:
+    return Item(**{**item, 'added_at': _moment(item['added_at']), 'done_at': _optional(item.get('done_at'))})
 
 
 def _iso(moment: datetime | None) -> str | None:

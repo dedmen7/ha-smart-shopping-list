@@ -135,8 +135,13 @@
       }
     },
     "clear_done": {
-      "name": "Gehaalde items opruimen",
-      "description": "Haalt gehaalde items weg; wat gekocht is blijft onthouden voor de vaste spullen.",
+      "name": "Gehaalde items archiveren",
+      "description": "Zet gehaalde items nu in het archief in plaats van na een dag; wat gehaald is, telt mee voor de vaste spullen.",
+      "fields": {}
+    },
+    "get_archive": {
+      "name": "Archief ophalen",
+      "description": "Geeft de gehaalde items van het afgelopen jaar, nieuwste eerst, met wie ze haalde en wanneer.",
       "fields": {}
     },
     "open_new_can": {

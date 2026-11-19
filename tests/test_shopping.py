@@ -1,4 +1,4 @@
-"""Shopping rules: entries, merging duplicates, aisles, who and when, and the regulars to re-add."""
+"""Shopping rules: entries, merging duplicates, aisles, who and when, the archive and the regulars to re-add."""
 
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -9,6 +9,7 @@ from custom_components.smart_shopping_list.shopping import (
     ListError,
     ShoppingState,
     add_item,
+    archive_bought,
     categorize,
     clear_done,
     complete_item,
@@ -115,12 +116,34 @@ def test_an_unknown_aisle_or_quantity_is_refused() -> None:
         complete_item(state, item_id='item-9', by='Tom', now=NOW)
 
 
-def test_clearing_removes_only_bought_items_and_keeps_the_history() -> None:
+def test_clearing_archives_only_bought_items_and_keeps_the_history() -> None:
     new_id = ids()
     state = added(added(ShoppingState(), 'melk', new_id=new_id), 'brood', new_id=new_id)
-    state = clear_done(complete_item(state, item_id='item-1', by='Tom', now=NOW))
+    state = clear_done(complete_item(state, item_id='item-1', by='Tom', now=NOW), now=NOW)
     assert [item.name for item in state.items] == ['brood']
+    assert [(item.name, item.done_by) for item in state.archive] == [('melk', 'Tom')]
     assert state.products['melk'].purchases == 1
+
+
+def test_bought_items_move_to_the_archive_a_day_after_they_were_bought() -> None:
+    new_id = ids()
+    state = added(added(added(ShoppingState(), 'melk', new_id=new_id), 'brood', new_id=new_id), 'kaas', new_id=new_id)
+    state = complete_item(state, item_id='item-1', by='Tom', now=NOW)
+    state = complete_item(state, item_id='item-2', by='Janou', now=NOW + timedelta(hours=5))
+    assert archive_bought(state, now=NOW + timedelta(hours=23)) == state
+    state = archive_bought(state, now=NOW + timedelta(days=1))
+    assert [item.name for item in state.items] == ['brood', 'kaas']
+    assert [item.name for item in state.archive] == ['melk']
+    state = archive_bought(state, now=NOW + timedelta(days=1, hours=5))
+    assert [item.name for item in state.items] == ['kaas']
+    assert [(item.name, item.done_by) for item in state.archive] == [('brood', 'Janou'), ('melk', 'Tom')]
+
+
+def test_the_archive_keeps_a_year() -> None:
+    state = complete_item(added(ShoppingState(), 'melk'), item_id='item-1', by='Tom', now=NOW)
+    state = archive_bought(state, now=NOW + timedelta(days=2))
+    assert len(archive_bought(state, now=NOW + timedelta(days=365)).archive) == 1
+    assert archive_bought(state, now=NOW + timedelta(days=366)).archive == ()
 
 
 def test_regulars_are_the_most_bought_items_not_already_on_the_list() -> None:
@@ -129,7 +152,7 @@ def test_regulars_are_the_most_bought_items_not_already_on_the_list() -> None:
     for day, name in enumerate(['melk', 'melk', 'melk', 'brood', 'brood', 'bananen']):
         state = added(state, name, new_id=new_id)
         open_item = next(item for item in state.items if not item.done)
-        state = clear_done(complete_item(state, item_id=open_item.item_id, by='Tom', now=NOW + timedelta(days=day)))
+        state = clear_done(complete_item(state, item_id=open_item.item_id, by='Tom', now=NOW + timedelta(days=day)), now=NOW + timedelta(days=day))
     state = added(state, 'brood', new_id=new_id)
     assert [(regular.name, regular.purchases) for regular in regulars(state, limit=8)] == [('melk', 3), ('bananen', 1)]
     assert regulars(state, limit=1)[0].last_bought == NOW + timedelta(days=2)

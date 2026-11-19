@@ -1,8 +1,10 @@
-/* Dashboard card for Smart Shopping List: the list per aisle, regulars to re-add, who and when, and the formula supply. */
+/* Dashboard card for Smart Shopping List: the list per aisle, regulars to re-add, who and when, the archive and the formula supply. */
 const SHOPPING_TEXT = {
   en: {
-    title: 'Shopping', placeholder: 'What do you need? e.g. 2x milk', add: 'Add', regulars: 'Often bought', bought: 'Bought', clear: 'Clear bought items',
-    empty: 'Nothing on the list.', by: 'by {name}', boughtBy: 'Bought by {name} · {when}', bought_unknown: 'Bought · {when}', lastBought: '{days} d ago', today: 'today',
+    title: 'Shopping', placeholder: 'What do you need? e.g. 2x milk', add: 'Add', regulars: 'Often bought', bought: 'Bought',
+    empty: 'Nothing on the list.', by: 'by {name}', boughtBy: 'Bought by {name} · {when}', bought_unknown: 'Bought · {when}', lastBought: '{days} d ago', today: 'today', yesterday: 'yesterday', todayTitle: 'Today', yesterdayTitle: 'Yesterday',
+    archiveNote: 'Bought items move to the archive after a day.', showArchive: 'Show archive', hideArchive: 'Hide archive', archive: 'Archive',
+    archiveEmpty: 'Nothing in the archive yet.', loading: 'Loading…', again: 'Add {name} again', archiveMeta: '{name} · {time}',
     edit: 'Edit', remove: 'Remove', done: 'Done', quantity: 'Quantity', aisle: 'Aisle', putBack: 'Put back on the list',
     supply: 'Formula', supplyLeft: 'About {days} days left · {grams} g', supplyUnknown: '{grams} g left', supplyLow: 'Running low', newCan: 'New can opened',
     supplySettings: 'Formula settings', track: 'Track formula', canGrams: 'Can size · g', perHundred: 'Powder per 100 ml · g', warnDays: 'Warn days ahead',
@@ -11,8 +13,10 @@ const SHOPPING_TEXT = {
     cat_drinks: 'Drinks', cat_baby: 'Baby', cat_care: 'Personal care', cat_household: 'Household', cat_other: 'Other',
   },
   nl: {
-    title: 'Boodschappen', placeholder: 'Wat moet er gehaald worden? bv. 2x melk', add: 'Toevoegen', regulars: 'Vaak gehaald', bought: 'Gehaald', clear: 'Gehaalde items opruimen',
-    empty: 'Er staat niets op de lijst.', by: 'door {name}', boughtBy: 'Gehaald door {name} · {when}', bought_unknown: 'Gehaald · {when}', lastBought: '{days} d geleden', today: 'vandaag',
+    title: 'Boodschappen', placeholder: 'Wat moet er gehaald worden? bv. 2x melk', add: 'Toevoegen', regulars: 'Vaak gehaald', bought: 'Gehaald',
+    empty: 'Er staat niets op de lijst.', by: 'door {name}', boughtBy: 'Gehaald door {name} · {when}', bought_unknown: 'Gehaald · {when}', lastBought: '{days} d geleden', today: 'vandaag', yesterday: 'gisteren', todayTitle: 'Vandaag', yesterdayTitle: 'Gisteren',
+    archiveNote: 'Gehaalde items gaan na een dag naar het archief.', showArchive: 'Archief bekijken', hideArchive: 'Archief verbergen', archive: 'Archief',
+    archiveEmpty: 'Het archief is nog leeg.', loading: 'Laden…', again: '{name} weer op de lijst', archiveMeta: '{name} · {time}',
     edit: 'Aanpassen', remove: 'Verwijderen', done: 'Klaar', quantity: 'Aantal', aisle: 'Afdeling', putBack: 'Terug op de lijst',
     supply: 'Flesvoeding', supplyLeft: 'Nog ongeveer {days} dagen · {grams} g', supplyUnknown: 'Nog {grams} g', supplyLow: 'Bijna op', newCan: 'Nieuw blik geopend',
     supplySettings: 'Flesvoeding instellen', track: 'Flesvoeding bijhouden', canGrams: 'Inhoud blik · g', perHundred: 'Poeder per 100 ml · g', warnDays: 'Dagen vooraf waarschuwen',
@@ -36,6 +40,7 @@ class SmartShoppingListCard extends HTMLElement {
     this._editing = null;
     this._showSettings = false;
     this._signature = '';
+    this._archive = null;
     this.shadowRoot.innerHTML = `
       <style>
         :host{display:block;--accent:var(--sh-accent,var(--primary-color,#d88959));--ink:var(--primary-text-color,#e8e2dc);--muted:var(--secondary-text-color,#a8a19a);--line:var(--ha-card-border-color,var(--divider-color,#383638));--surface:var(--ha-card-background,var(--card-background-color,#1c1c1e));--soft:color-mix(in srgb,var(--ink) 5%,var(--surface));--ok:var(--sh-ok,var(--success-color,#9bb783));--warn:var(--sh-alert,var(--error-color,#c96a54))}
@@ -76,7 +81,11 @@ class SmartShoppingListCard extends HTMLElement {
         .empty{padding:18px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);text-align:center}
         details{margin-top:14px}
         summary{cursor:pointer;color:var(--muted);font-weight:600;padding:8px 0}
-        .clear{margin-top:8px;width:100%}
+        .note{margin:8px 0 0;color:var(--muted);font-size:12px}
+        .archive-toggle{margin-top:8px;width:100%}
+        .day{margin:14px 0 6px;color:var(--muted);font-size:13px;font-weight:600}
+        span.tick{display:flex;align-items:center}
+        .again{min-width:44px;padding:0;font-size:20px;color:var(--accent)}
         .supply{margin-top:18px;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--soft)}
         .supply.low{border-color:var(--warn);background:color-mix(in srgb,var(--warn) 10%,var(--surface))}
         .supply-head{display:flex;justify-content:space-between;gap:10px;align-items:center;font-weight:600}
@@ -94,7 +103,8 @@ class SmartShoppingListCard extends HTMLElement {
         <div class="error" id="error" role="alert" hidden></div>
         <section id="regulars-section"><div class="label" data-text="regulars"></div><div class="chips" id="regulars"></div></section>
         <div id="aisles"></div>
-        <details id="bought-section"><summary id="bought-title"></summary><ul id="bought"></ul><button class="clear" id="clear" data-text="clear"></button></details>
+        <details id="bought-section"><summary id="bought-title"></summary><ul id="bought"></ul></details>
+        <p class="note" data-text="archiveNote"></p><button class="archive-toggle" id="archive-toggle" type="button" data-action="archive"></button><section id="archive" hidden></section>
         <section class="supply" id="supply" hidden></section>
       </ha-card>`;
     this.$ = id => this.shadowRoot.getElementById(id);
@@ -109,8 +119,11 @@ class SmartShoppingListCard extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     const status = hass.states[STATUS_ENTITY];
-    const signature = JSON.stringify([this._lang(), status?.state, status?.attributes, this._editing, this._showSettings]);
+    const listSignature = JSON.stringify([status?.state, status?.attributes]);
+    const signature = JSON.stringify([this._lang(), listSignature, this._editing, this._showSettings, this._archive]);
     if (signature === this._signature) return;
+    if (Array.isArray(this._archive) && listSignature !== this._listSignature && this._listSignature !== undefined) this._loadArchive();
+    this._listSignature = listSignature;
     this._signature = signature;
     this._render();
   }
@@ -129,9 +142,33 @@ class SmartShoppingListCard extends HTMLElement {
     const format = this._hass?.locale?.time_format;
     const hourCycle = format === '12' ? 'h12' : format === '24' ? 'h23' : undefined;
     const time = moment.toLocaleTimeString(this._locale(), {hour: '2-digit', minute: '2-digit', hourCycle, timeZone});
-    const day = date => date.toLocaleDateString('en-CA', {timeZone});
-    if (day(moment) === day(now)) return time;
+    const relative = this._relativeDay(moment, now);
+    if (relative) return this._t(relative) + ' ' + time;
     return moment.toLocaleDateString(this._locale(), {day: 'numeric', month: 'short', timeZone}) + ' ' + time;
+  }
+
+  _time(value) {
+    const format = this._hass?.locale?.time_format;
+    const hourCycle = format === '12' ? 'h12' : format === '24' ? 'h23' : undefined;
+    return new Date(value).toLocaleTimeString(this._locale(), {hour: '2-digit', minute: '2-digit', hourCycle, timeZone: this._hass?.config?.time_zone || undefined});
+  }
+
+  _dayKey(date) { return date.toLocaleDateString('en-CA', {timeZone: this._hass?.config?.time_zone || undefined}); }
+
+  /** 'today' or 'yesterday' in the Home Assistant time zone, otherwise null. */
+  _relativeDay(moment, now) {
+    const day = this._dayKey(moment);
+    if (day === this._dayKey(now)) return 'today';
+    if (day === this._dayKey(new Date(now.getTime() - 86400000))) return 'yesterday';
+    return null;
+  }
+
+  _dayTitle(value) {
+    const moment = new Date(value);
+    const relative = this._relativeDay(moment, new Date());
+    if (relative) return this._t(relative + 'Title');
+    const title = moment.toLocaleDateString(this._locale(), {weekday: 'long', day: 'numeric', month: 'long', timeZone: this._hass?.config?.time_zone || undefined});
+    return title.charAt(0).toUpperCase() + title.slice(1);
   }
 
   _render() {
@@ -146,7 +183,61 @@ class SmartShoppingListCard extends HTMLElement {
     this.$('bought-section').hidden = !bought.length;
     this.$('bought-title').textContent = this._t('bought') + ' (' + bought.length + ')';
     this.$('bought').replaceChildren(...bought.slice().sort((a, b) => Date.parse(b.done_at) - Date.parse(a.done_at)).map(item => this._row(item)));
+    this.$('archive-toggle').textContent = this._t(this._archive === null ? 'showArchive' : 'hideArchive');
+    this._renderArchive();
     this._renderSupply(attributes.supply || {});
+  }
+
+  _renderArchive() {
+    const panel = this.$('archive');
+    panel.hidden = this._archive === null;
+    if (panel.hidden) return;
+    if (this._archive === 'loading') { panel.replaceChildren(Object.assign(document.createElement('div'), {className: 'empty', textContent: this._t('loading')})); return; }
+    if (!this._archive.length) { panel.replaceChildren(Object.assign(document.createElement('div'), {className: 'empty', textContent: this._t('archiveEmpty')})); return; }
+    const days = [];
+    for (const item of this._archive) {
+      const key = this._dayKey(new Date(item.done_at));
+      if (!days.length || days.at(-1).key !== key) days.push({key, at: item.done_at, items: []});
+      days.at(-1).items.push(item);
+    }
+    panel.replaceChildren(...days.flatMap(day => {
+      const list = document.createElement('ul');
+      list.append(...day.items.map(item => this._archiveRow(item)));
+      return [Object.assign(document.createElement('div'), {className: 'day', textContent: this._dayTitle(day.at)}), list];
+    }));
+  }
+
+  _archiveRow(item) {
+    const row = Object.assign(document.createElement('li'), {className: 'done archived'});
+    const tick = Object.assign(document.createElement('span'), {className: 'tick'});
+    tick.append(document.createElement('span'));
+    const body = document.createElement('div');
+    const name = Object.assign(document.createElement('div'), {className: 'name'});
+    if (item.quantity > 1) name.append(Object.assign(document.createElement('span'), {className: 'qty', textContent: '×' + item.quantity}));
+    name.append(item.name);
+    const time = this._time(item.done_at);
+    const meta = Object.assign(document.createElement('div'), {className: 'meta', textContent: item.done_by ? this._t('archiveMeta', {name: item.done_by, time}) : time});
+    body.append(name, meta);
+    const again = Object.assign(document.createElement('button'), {className: 'again', type: 'button', textContent: '+'});
+    again.dataset.action = 'again';
+    again.dataset.text = (item.quantity > 1 ? item.quantity + 'x ' : '') + item.name;
+    again.setAttribute('aria-label', this._t('again', {name: item.name}));
+    row.append(tick, body, again);
+    return row;
+  }
+
+  async _loadArchive() {
+    if (this._archive === null) this._archive = 'loading';
+    this._refresh();
+    try {
+      const result = await this._hass.callWS({type: 'call_service', domain: 'smart_shopping_list', service: 'get_archive', service_data: {}, return_response: true});
+      if (this._archive !== null) this._archive = result?.response?.items || [];
+    } catch (error) {
+      this._archive = null;
+      this.$('error').textContent = this._t('error');
+      this.$('error').hidden = false;
+    }
+    this._refresh();
   }
 
   _renderRegulars(regulars) {
@@ -295,8 +386,9 @@ class SmartShoppingListCard extends HTMLElement {
       plus: () => item && item.quantity < 99 && this._call('update_item', {item_id: id, quantity: item.quantity + 1}),
       'new-can': () => this._call('open_new_can', {}),
       'supply-settings': () => { this._showSettings = !this._showSettings; this._refresh(); },
+      again: () => this._call('add_item', {text: button.dataset.text}),
+      archive: () => { if (this._archive === null) return this._loadArchive(); this._archive = null; this._refresh(); },
     };
-    if (button.id === 'clear') return this._call('clear_done', {});
     actions[button.dataset.action]?.();
   }
 
