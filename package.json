@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "scripts": {
+    "test:card": "node tests/card.test.mjs"
+  },
+  "devDependencies": {
+    "happy-dom": "21.0.4"
+  }
+}

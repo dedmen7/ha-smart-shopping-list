@@ -1,0 +1,183 @@
+{
+  "title": "Smart Shopping List",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Smart Shopping List",
+        "description": "Creates a shared shopping list."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "The shopping list is already set up."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Names on the list",
+        "description": "The name shown for each person who adds or buys something."
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "status": {
+        "name": "Shopping list"
+      }
+    },
+    "todo": {
+      "list": {
+        "name": "Shopping list"
+      }
+    }
+  },
+  "selector": {
+    "category": {
+      "options": {
+        "produce": "Fruit & vegetables",
+        "bread": "Bread",
+        "meat_fish": "Meat & fish",
+        "dairy": "Dairy & eggs",
+        "frozen": "Frozen",
+        "pantry": "Pantry",
+        "drinks": "Drinks",
+        "baby": "Baby",
+        "care": "Personal care",
+        "household": "Household",
+        "other": "Other"
+      }
+    }
+  },
+  "exceptions": {
+    "empty_entry": {
+      "message": "Enter what you need."
+    },
+    "entry_too_long": {
+      "message": "Keep an item under 100 characters."
+    },
+    "invalid_quantity": {
+      "message": "Choose a quantity from 1 to 99."
+    },
+    "invalid_category": {
+      "message": "Choose one of the aisles."
+    },
+    "item_not_found": {
+      "message": "This item was changed or removed. Refresh the list."
+    },
+    "invalid_supply": {
+      "message": "Check the formula settings: a can of 1 to 5000 g, up to 40 g per 100 ml and a warning of 0 to 14 days."
+    },
+    "not_loaded": {
+      "message": "Smart Shopping List is not loaded."
+    }
+  },
+  "services": {
+    "add_item": {
+      "name": "Add item",
+      "description": "Adds an item; \"2x milk\" sets a quantity and an item already on the list gets a higher quantity.",
+      "fields": {
+        "text": {
+          "name": "Item",
+          "description": "For example \"2x milk\"."
+        }
+      }
+    },
+    "complete_item": {
+      "name": "Mark as bought",
+      "description": "Marks an item as bought by the user who calls the action.",
+      "fields": {
+        "item_id": {
+          "name": "Item",
+          "description": "ID of the item on the list."
+        }
+      }
+    },
+    "reopen_item": {
+      "name": "Put back on the list",
+      "description": "Puts a bought item back on the list.",
+      "fields": {
+        "item_id": {
+          "name": "Item",
+          "description": "ID of the item on the list."
+        }
+      }
+    },
+    "remove_item": {
+      "name": "Remove item",
+      "description": "Removes an item from the list.",
+      "fields": {
+        "item_id": {
+          "name": "Item",
+          "description": "ID of the item on the list."
+        }
+      }
+    },
+    "update_item": {
+      "name": "Change item",
+      "description": "Changes the name, quantity or aisle; a new aisle is remembered for next time.",
+      "fields": {
+        "item_id": {
+          "name": "Item",
+          "description": "ID of the item on the list."
+        },
+        "name": {
+          "name": "Name",
+          "description": "New name."
+        },
+        "quantity": {
+          "name": "Quantity",
+          "description": "1 to 99."
+        },
+        "category": {
+          "name": "Aisle",
+          "description": "Aisle in the shop."
+        }
+      }
+    },
+    "clear_done": {
+      "name": "Clear bought items",
+      "description": "Removes bought items; what was bought is remembered for the regulars.",
+      "fields": {}
+    },
+    "open_new_can": {
+      "name": "New can opened",
+      "description": "Starts counting formula from a full can now.",
+      "fields": {}
+    },
+    "refresh_supply": {
+      "name": "Check supply",
+      "description": "Recalculates the formula supply from the feeding diary.",
+      "fields": {}
+    },
+    "set_supply": {
+      "name": "Formula settings",
+      "description": "Can size, powder per 100 ml and when to put formula on the list.",
+      "fields": {
+        "enabled": {
+          "name": "Track formula",
+          "description": "Use the feeding diary to track the open can."
+        },
+        "can_grams": {
+          "name": "Can size",
+          "description": "Grams of powder in a full can."
+        },
+        "grams_per_100ml": {
+          "name": "Powder per 100 ml",
+          "description": "Grams of powder for 100 ml of bottle, see the can."
+        },
+        "warn_days": {
+          "name": "Warn days ahead",
+          "description": "Put formula on the list this many days before the can is empty."
+        },
+        "product_name": {
+          "name": "Product name",
+          "description": "The name put on the list."
+        },
+        "diary_entity": {
+          "name": "Feeding diary",
+          "description": "Calendar with the bottles, for example from Baby Feeding."
+        }
+      }
+    }
+  }
+}

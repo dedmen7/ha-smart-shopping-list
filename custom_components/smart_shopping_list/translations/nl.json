@@ -1,0 +1,183 @@
+{
+  "title": "Slimme boodschappenlijst",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Slimme boodschappenlijst",
+        "description": "Maakt een gedeelde boodschappenlijst."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "De boodschappenlijst is al ingesteld."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Namen op de lijst",
+        "description": "De naam die bij iedereen staat die iets toevoegt of haalt."
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "status": {
+        "name": "Boodschappenlijst"
+      }
+    },
+    "todo": {
+      "list": {
+        "name": "Boodschappen"
+      }
+    }
+  },
+  "selector": {
+    "category": {
+      "options": {
+        "produce": "Groente & fruit",
+        "bread": "Brood",
+        "meat_fish": "Vlees & vis",
+        "dairy": "Zuivel & eieren",
+        "frozen": "Diepvries",
+        "pantry": "Houdbaar",
+        "drinks": "Dranken",
+        "baby": "Baby",
+        "care": "Verzorging",
+        "household": "Huishouden",
+        "other": "Overig"
+      }
+    }
+  },
+  "exceptions": {
+    "empty_entry": {
+      "message": "Vul in wat je nodig hebt."
+    },
+    "entry_too_long": {
+      "message": "Houd een item onder de 100 tekens."
+    },
+    "invalid_quantity": {
+      "message": "Kies een aantal van 1 tot en met 99."
+    },
+    "invalid_category": {
+      "message": "Kies een van de afdelingen."
+    },
+    "item_not_found": {
+      "message": "Dit item is gewijzigd of verwijderd. Vernieuw de lijst."
+    },
+    "invalid_supply": {
+      "message": "Controleer de flesvoeding-instellingen: een blik van 1 tot 5000 g, maximaal 40 g per 100 ml en een waarschuwing van 0 tot 14 dagen."
+    },
+    "not_loaded": {
+      "message": "Slimme boodschappenlijst is niet geladen."
+    }
+  },
+  "services": {
+    "add_item": {
+      "name": "Item toevoegen",
+      "description": "Voegt een item toe; \"2x melk\" geeft een aantal en een item dat er al op staat krijgt een hoger aantal.",
+      "fields": {
+        "text": {
+          "name": "Item",
+          "description": "Bijvoorbeeld \"2x melk\"."
+        }
+      }
+    },
+    "complete_item": {
+      "name": "Afvinken",
+      "description": "Vinkt een item af namens de gebruiker die de actie uitvoert.",
+      "fields": {
+        "item_id": {
+          "name": "Item",
+          "description": "ID van het item op de lijst."
+        }
+      }
+    },
+    "reopen_item": {
+      "name": "Terugzetten",
+      "description": "Zet een gehaald item terug op de lijst.",
+      "fields": {
+        "item_id": {
+          "name": "Item",
+          "description": "ID van het item op de lijst."
+        }
+      }
+    },
+    "remove_item": {
+      "name": "Item verwijderen",
+      "description": "Haalt een item van de lijst.",
+      "fields": {
+        "item_id": {
+          "name": "Item",
+          "description": "ID van het item op de lijst."
+        }
+      }
+    },
+    "update_item": {
+      "name": "Item aanpassen",
+      "description": "Past naam, aantal of afdeling aan; een nieuwe afdeling wordt onthouden.",
+      "fields": {
+        "item_id": {
+          "name": "Item",
+          "description": "ID van het item op de lijst."
+        },
+        "name": {
+          "name": "Naam",
+          "description": "Nieuwe naam."
+        },
+        "quantity": {
+          "name": "Aantal",
+          "description": "1 tot en met 99."
+        },
+        "category": {
+          "name": "Afdeling",
+          "description": "Afdeling in de winkel."
+        }
+      }
+    },
+    "clear_done": {
+      "name": "Gehaalde items opruimen",
+      "description": "Haalt gehaalde items weg; wat gekocht is blijft onthouden voor de vaste spullen.",
+      "fields": {}
+    },
+    "open_new_can": {
+      "name": "Nieuw blik geopend",
+      "description": "Begint nu te tellen vanaf een vol blik flesvoeding.",
+      "fields": {}
+    },
+    "refresh_supply": {
+      "name": "Voorraad controleren",
+      "description": "Berekent de voorraad flesvoeding opnieuw uit het voedingsdagboek.",
+      "fields": {}
+    },
+    "set_supply": {
+      "name": "Flesvoeding instellen",
+      "description": "Blikgrootte, poeder per 100 ml en wanneer flesvoeding op de lijst komt.",
+      "fields": {
+        "enabled": {
+          "name": "Flesvoeding bijhouden",
+          "description": "Gebruik het voedingsdagboek om het open blik bij te houden."
+        },
+        "can_grams": {
+          "name": "Inhoud blik",
+          "description": "Gram poeder in een vol blik."
+        },
+        "grams_per_100ml": {
+          "name": "Poeder per 100 ml",
+          "description": "Gram poeder voor 100 ml fles, zie het blik."
+        },
+        "warn_days": {
+          "name": "Dagen vooraf waarschuwen",
+          "description": "Zet flesvoeding zoveel dagen voor het blik leeg is op de lijst."
+        },
+        "product_name": {
+          "name": "Productnaam",
+          "description": "De naam die op de lijst komt."
+        },
+        "diary_entity": {
+          "name": "Voedingsdagboek",
+          "description": "Kalender met de flessen, bijvoorbeeld van Baby Feeding."
+        }
+      }
+    }
+  }
+}
